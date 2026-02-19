@@ -1,0 +1,50 @@
+class DisjointSet:
+    def __init__(self):
+        self._parent = {}   
+        self._rank   = {}   
+
+    def make_set(self, x) -> None:
+        if x not in self._parent:
+            self._parent[x] = x   # x is its own root
+            self._rank[x]   = 0
+
+    def find_set(self, x):
+        if self._parent[x] != x:
+            self._parent[x] = self.find_set(self._parent[x])   # compress
+        return self._parent[x]
+
+    def union(self, x, y) -> None:
+        rx, ry = self.find_set(x), self.find_set(y)
+        if rx == ry:
+            return                          # already in the same set
+        if self._rank[rx] < self._rank[ry]:
+            rx, ry = ry, rx                 # ensure rx has >= rank
+        self._parent[ry] = rx               # attach ry under rx
+        if self._rank[rx] == self._rank[ry]:
+            self._rank[rx] += 1             # rank increases only when equal
+
+if __name__ == "__main__":
+    import time, random
+
+    print("  Empirical benchmark  (find_set µs/op)")
+    print(f"{'n':>10}  {'setup(s)':>9}  {'find µs/op':>12}")
+
+    for n in [1_000, 10_000, 100_000, 1_000_000]:
+        ds2 = DisjointSet()
+        for i in range(n):
+            ds2.make_set(i)
+
+        # union in random pairs to create a realistic structure
+        t0 = time.perf_counter()
+        pairs = [(random.randrange(n), random.randrange(n)) for _ in range(n)]
+        for a, b in pairs:
+            ds2.union(a, b)
+        setup_t = time.perf_counter() - t0
+
+        sample = [random.randrange(n) for _ in range(5000)]
+        t0 = time.perf_counter()
+        for x in sample:
+            ds2.find_set(x)
+        find_t = (time.perf_counter() - t0) / len(sample) * 1e6
+
+        print(f"{n:>10,}  {setup_t:>9.3f}  {find_t:>12.4f}")
