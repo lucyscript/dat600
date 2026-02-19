@@ -1,0 +1,211 @@
+from __future__ import annotations
+from typing import Any, Optional, Tuple
+
+class _Node:
+    __slots__ = ("key", "data", "left", "right", "height")
+
+    def __init__(self, key, data):
+        self.key    = key
+        self.data   = data
+        self.left:  Optional[_Node] = None
+        self.right: Optional[_Node] = None
+        self.height: int = 1
+
+def _h(node):
+    return node.height if node else 0
+
+def _update(node):
+    node.height = 1 + max(_h(node.left), _h(node.right))
+
+def _bf(node):
+    return _h(node.left) - _h(node.right)
+
+def _rot_right(y):
+    x = y.left
+    y.left = x.right
+    x.right = y
+    _update(y); _update(x)
+    return x
+
+def _rot_left(x):
+    y = x.right
+    x.right = y.left
+    y.left = x
+    _update(x); _update(y)
+    return y
+
+def _balance(node):
+    _update(node)
+    bf = _bf(node)
+    if bf > 1:
+        if _bf(node.left) < 0:
+            node.left = _rot_left(node.left)
+        return _rot_right(node)
+    if bf < -1:
+        if _bf(node.right) > 0:
+            node.right = _rot_right(node.right)
+        return _rot_left(node)
+    return node
+
+def _insert(node, key, data):
+    if node is None:
+        return _Node(key, data)
+    if key < node.key:
+        node.left  = _insert(node.left,  key, data)
+    elif key > node.key:
+        node.right = _insert(node.right, key, data)
+    return _balance(node)
+
+def _min_node(node):
+    while node.left:
+        node = node.left
+    return node
+
+def _max_node(node):
+    while node.right:
+        node = node.right
+    return node
+
+def _delete(node, key):
+    if node is None:
+        return None
+    if key < node.key:
+        node.left  = _delete(node.left,  key)
+    elif key > node.key:
+        node.right = _delete(node.right, key)
+    else:
+        if node.left is None:
+            return node.right
+        if node.right is None:
+            return node.left
+        succ = _min_node(node.right)
+        node.key, node.data = succ.key, succ.data
+        node.right = _delete(node.right, succ.key)
+    return _balance(node)
+
+def _find(node, key):
+    while node:
+        if key == node.key:
+            return node
+        node = node.left if key < node.key else node.right
+    return None
+
+def _find_prev(node, key):
+    best = None
+    while node:
+        if node.key < key:
+            best = node
+            node = node.right
+        else:
+            node = node.left
+    return best
+
+def _find_next(node, key):
+    best = None
+    while node:
+        if node.key > key:
+            best = node
+            node = node.left
+        else:
+            node = node.right
+    return best
+
+class SetADT:
+    def __init__(self):
+        self._root = None
+        self._size = 0
+
+    def build(self, X) -> None:
+        self._root = None
+        self._size = 0
+        for key, data in X:
+            self.insert(key, data)
+
+    def find(self, k):
+        node = _find(self._root, k)
+        return (node.key, node.data, True) if node else (None, None, False)
+
+    def insert(self, key, data=None) -> None:
+        if _find(self._root, key) is None:
+            self._root = _insert(self._root, key, data)
+            self._size += 1
+
+    def delete(self, k) -> None:
+        if _find(self._root, k) is not None:
+            self._root = _delete(self._root, k)
+            self._size -= 1
+
+    def find_min(self):
+        if not self._root:
+            return None, None, False
+        n = _min_node(self._root)
+        return n.key, n.data, True
+
+    def find_max(self):
+        if not self._root:
+            return None, None, False
+        n = _max_node(self._root)
+        return n.key, n.data, True
+
+    def find_prev(self, k):
+        n = _find_prev(self._root, k)
+        return (n.key, n.data, True) if n else (None, None, False)
+
+    def find_next(self, k):
+        n = _find_next(self._root, k)
+        return (n.key, n.data, True) if n else (None, None, False)
+
+    def __len__(self):
+        return self._size
+
+    def __repr__(self):
+        items = []
+        def inorder(nd):
+            if nd:
+                inorder(nd.left)
+                items.append((nd.key, nd.data))
+                inorder(nd.right)
+        inorder(self._root)
+        return f"SetADT({items})"
+
+
+if __name__ == "__main__":
+    import time, random, math
+
+    s = SetADT()
+    s.build([(k, f"val_{k}") for k in [10, 3, 15, 1, 7, 12, 20, 5, 9]])
+    print("build([10,3,15,1,7,12,20,5,9]):", s)
+
+    print("find(7)      :", s.find(7))
+    print("find(99)     :", s.find(99))
+
+    s.insert(6, "val_6")
+    print("after insert(6):", s)
+
+    s.delete(7)
+    print("after delete(7):", s)
+
+    print("find_min()   :", s.find_min())
+    print("find_max()   :", s.find_max())
+    print("find_prev(9) :", s.find_prev(9))   # should be 6
+    print("find_next(9) :", s.find_next(9))   # should be 10
+
+    print()
+    print("  Empirical benchmark  (find µs/op vs lg n)")
+    print(f"{'n':>10}  {'build(s)':>10}  {'find µs/op':>12}  {'lg n':>6}")
+
+    for n in [1_000, 10_000, 100_000, 1_000_000]:
+        keys = random.sample(range(n * 10), n)
+
+        t0 = time.perf_counter()
+        s2 = SetADT()
+        s2.build((k, k) for k in keys)
+        build_t = time.perf_counter() - t0
+
+        sample = random.sample(keys, min(2000, n))
+        t0 = time.perf_counter()
+        for k in sample:
+            s2.find(k)
+        find_t = (time.perf_counter() - t0) / len(sample) * 1e6
+
+        print(f"{n:>10,}  {build_t:>10.3f}  {find_t:>12.3f}  {math.log2(n):>6.1f}")
