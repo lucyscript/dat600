@@ -172,25 +172,6 @@ class SetADT:
 if __name__ == "__main__":
     import time, random, math
 
-    s = SetADT()
-    s.build([(k, f"val_{k}") for k in [10, 3, 15, 1, 7, 12, 20, 5, 9]])
-    print("build([10,3,15,1,7,12,20,5,9]):", s)
-
-    print("find(7)      :", s.find(7))
-    print("find(99)     :", s.find(99))
-
-    s.insert(6, "val_6")
-    print("after insert(6):", s)
-
-    s.delete(7)
-    print("after delete(7):", s)
-
-    print("find_min()   :", s.find_min())
-    print("find_max()   :", s.find_max())
-    print("find_prev(9) :", s.find_prev(9))   # should be 6
-    print("find_next(9) :", s.find_next(9))   # should be 10
-
-    print()
     print("  Empirical benchmark  (find µs/op vs lg n)")
     print(f"{'n':>10}  {'build(s)':>10}  {'find µs/op':>12}  {'lg n':>6}")
 
