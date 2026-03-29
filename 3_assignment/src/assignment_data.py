@@ -1,8 +1,6 @@
-"""Static graph data taken from the assignment PDF."""
+"""Static graph data taken from the assignment figures."""
 
 from __future__ import annotations
-
-from collections.abc import Mapping, Sequence
 
 
 ADJACENCY_MATRIX_LABELS: list[str] = ["1", "2", "3", "4", "5", "6"]
@@ -91,6 +89,7 @@ MAX_FLOW_EDGES: list[tuple[str, str, int]] = [
 ]
 
 DEGREE_LIMIT_COUNTEREXAMPLE_VERTICES: list[str] = ["A", "B", "C", "D", "E"]
+
 DEGREE_LIMIT_COUNTEREXAMPLE_EDGES: list[tuple[str, str, int]] = [
     ("C", "E", 1),
     ("D", "E", 2),
@@ -103,11 +102,6 @@ DEGREE_LIMIT_COUNTEREXAMPLE_EDGES: list[tuple[str, str, int]] = [
     ("A", "B", 9),
     ("C", "D", 5),
 ]
+
 DEGREE_LIMIT_COUNTEREXAMPLE_LIMITS: dict[str, int] = {"D": 2}
-
-
-def sorted_graph(graph: Mapping[str, Sequence[str]]) -> dict[str, list[str]]:
-    """Return a copy with nodes and neighbors in alphabetical order."""
-
-    return {node: sorted(neighbors) for node, neighbors in sorted(graph.items())}
 

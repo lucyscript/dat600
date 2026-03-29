@@ -1,4 +1,4 @@
-"""Algorithm implementations used by the assignment solutions."""
+"""Shared graph algorithms for the assignment tasks."""
 
 from __future__ import annotations
 
@@ -82,12 +82,11 @@ def adjacency_list_from_matrix(labels: Sequence[Node], matrix: Sequence[Sequence
 
 
 def directed_edges_from_adjacency_list(graph: Mapping[Node, Sequence[Node]]) -> tuple[tuple[Node, Node], ...]:
-    edges = [
+    return tuple(
         (source, target)
         for source, neighbors in normalize_adjacency_list(graph).items()
         for target in neighbors
-    ]
-    return tuple(edges)
+    )
 
 
 def dfs_with_timestamps(graph: Mapping[Node, Sequence[Node]], start: Node) -> TraversalResult:
@@ -148,9 +147,7 @@ def bfs_with_timestamps(graph: Mapping[Node, Sequence[Node]], start: Node) -> Tr
                 queue.append(neighbor)
                 time += 1
                 discover[neighbor] = time
-                queue_snapshots.append(
-                    f"discover {neighbor} from {vertex}: [{', '.join(queue)}]"
-                )
+                queue_snapshots.append(f"discover {neighbor} from {vertex}: [{', '.join(queue)}]")
         state[vertex] = "black"
         time += 1
         finish[vertex] = time
@@ -288,12 +285,11 @@ def reachable_nodes(graph: Mapping[Node, Sequence[Node]], start: Node) -> frozen
 
 def find_champions(graph: Mapping[Node, Sequence[Node]]) -> tuple[Node, ...]:
     adjacency = normalize_adjacency_list(graph)
-    champions = [
+    return tuple(
         vertex
         for vertex in adjacency
         if len(reachable_nodes(adjacency, vertex)) == len(adjacency)
-    ]
-    return tuple(champions)
+    )
 
 
 def degree_count(edges: Iterable[WeightedEdge]) -> dict[Node, int]:
@@ -384,11 +380,7 @@ def degree_constrained_kruskal(
     )
 
 
-def swap_edge_weights(
-    edges: Sequence[WeightedEdge],
-    first_index: int,
-    second_index: int,
-) -> tuple[WeightedEdge, ...]:
+def swap_edge_weights(edges: Sequence[WeightedEdge], first_index: int, second_index: int) -> tuple[WeightedEdge, ...]:
     swapped = list(edges)
     left_start, left_end, left_weight = swapped[first_index]
     right_start, right_end, right_weight = swapped[second_index]
@@ -501,13 +493,10 @@ def resolve_antiparallel_edges(edges: Sequence[WeightedEdge]) -> tuple[WeightedE
         if (target, source) not in edge_lookup:
             transformed.append((source, target, weight))
             continue
-
         unordered_pair = frozenset({source, target})
         if unordered_pair in handled_pairs:
             continue
-
-        forward = tuple(sorted((source, target)))
-        keep_source, keep_target = forward[0], forward[1]
+        keep_source, keep_target = tuple(sorted((source, target)))
         keep_weight = edge_lookup[(keep_source, keep_target)]
         split_weight = edge_lookup[(keep_target, keep_source)]
         split_node = f"{keep_target}_to_{keep_source}"
@@ -585,3 +574,4 @@ def edmonds_karp(edges: Sequence[WeightedEdge], source: Node, sink: Node) -> Max
         min_cut_source_side=frozenset(reachable),
         min_cut_edges=cut_edges,
     )
+
